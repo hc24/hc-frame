@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mongo="http://www.springframework.org/schema/data/mongo" 
+	xsi:schemaLocation=" 
+          http://www.springframework.org/schema/beans 
+          http://www.springframework.org/schema/beans/spring-beans-3.0.xsd 
+          http://www.springframework.org/schema/tx 
+          http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+          http://www.springframework.org/schema/context 
+          http://www.springframework.org/schema/context/spring-context-3.0.xsd 
+          http://www.springframework.org/schema/aop 
+          http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+          http://www.springframework.org/schema/data/mongo  
+        http://www.springframework.org/schema/data/mongo/spring-mongo-1.0.xsd"
+	default-autowire="byName">
+	<!-- 注意上面的default-autowire="byName"，使用Spring自动装配，参考资料：http://www.blogjava.net/cmzy/archive/2008/07/20/216176.html -->
+	<bean id="propertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations">
+			<list>
+				<!-- 
+				 <value>jdbc.properties</value> 
+				  -->
+				<value>/WEB-INF/classes/jdbc.properties</value>
+				  
+			</list>
+		</property>
+	</bean>
+
+
+	<!-- 定义Proxool数据源 -->
+	<bean id="dataSource" class="org.logicalcobwebs.proxool.ProxoolDataSource">
+		<property name="driver" value="${jdbc.driver}" />
+		<property name="driverUrl"
+			value="jdbc:mysql://${jdbc.url}:3306/${jdbc.database}?user=${jdbc.user}&amp;password=${jdbc.password}&amp;characterEncoding=utf-8" />
+		<property name="user" value="${jdbc.user}" />
+		<property name="password" value="${jdbc.password}" />
+
+		<!-- proxool自动侦察各个连接状态的时间间隔(毫秒),侦察到空闲的连接就马上回 收,超时的销毁 （默认30秒），这里设置成3分钟 -->
+		<property name="houseKeepingSleepTime" value="180000" />
+		<!-- 最少保持的空闲连接数 -->
+		<property name="prototypeCount" value="2" />
+		<!-- 最大连接数(默认5个),超过了这个连接数,再有请求时,就排在队列中等候,最大的等待请求数由maximumnewconnections决定 -->
+		<property name="maximumConnectionCount" value="15" />
+		<!-- 最小连接数 -->
+		<property name="minimumConnectionCount" value="5" />
+		<property name="alias" value="mysql"></property>
+		<property name="testBeforeUse" value="true"></property>
+		<property name="houseKeepingTestSql" value="select now()"></property>
+	</bean>
+
+	<!-- 定义事物管理器 -->
+
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<!-- 以 @Transactional 标注来定义事务 -->
+	<tx:annotation-driven transaction-manager="transactionManager"
+		proxy-target-class="true" />
+
+	<!-- 定义jdbc模版  -->
+	<bean id="baseTemplate" class="com.hc24.frame.spring.dao.BaseJdbcTemplate">
+		<constructor-arg name="dataSource" ref="dataSource"/>
+	</bean>
+	
+	<!-- 自动扫描组件，这里要把action下面的 controller去除，他们是在dispatcher-servlet.xml中配置的，如果不去除会影响事务管理的。 -->
+	<!-- spring自动扫描机制，请查看资料：http://newleague.iteye.com/blog/1115532 -->
+	<context:component-scan base-package="com.mef.clearticket">
+		<context:exclude-filter type="regex" expression="com.mef.clearticket.web"/>
+	</context:component-scan>
+
+	<!-- 编程方式的Bean工厂，可以直接在代码里调用Spring容器里的实体 -->
+	<bean class="com.hc24.frame.spring.SpringFactory"/>
+	
+</beans>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mongo="http://www.springframework.org/schema/data/mongo" 
+	xsi:schemaLocation=" 
+          http://www.springframework.org/schema/beans 
+          http://www.springframework.org/schema/beans/spring-beans-3.0.xsd 
+          http://www.springframework.org/schema/tx 
+          http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+          http://www.springframework.org/schema/context 
+          http://www.springframework.org/schema/context/spring-context-3.0.xsd 
+          http://www.springframework.org/schema/aop 
+          http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+          http://www.springframework.org/schema/data/mongo  
+        http://www.springframework.org/schema/data/mongo/spring-mongo-1.0.xsd"
+	default-autowire="byName">
+	
+
+	<!-- 定义MongoDB数据源 -->
+	<bean id="mongoDataSource" class="com.hc24.frame.spring.dao.mongo.MongoDataSource">
+		<property name="url" value="mongodb://localhost:27017/"/>
+		<property name="db" value="tutorial"/>
+	</bean>
+
+	 <!-- 定义Mongo模板 -->
+	 <bean id="baseTemplate" class="com.hc24.frame.spring.dao.mongo.BaseMongoTemplate">
+	 	<property name="mongoDataSource" ref="mongoDataSource"/>
+	 </bean>
+
+	<!-- 自动扫描组件，这里要把action下面的 controller去除，他们是在dispatcher-servlet.xml中配置的，如果不去除会影响事务管理的。 -->
+	<!-- spring自动扫描机制，请查看资料：http://newleague.iteye.com/blog/1115532 -->
+	<context:component-scan base-package="test.mongo">
+		<context:exclude-filter type="regex" expression="com.mef.clearticket.web"/>
+	</context:component-scan>
+
+	<!-- 编程方式的Bean工厂，可以直接在代码里调用Spring容器里的实体 -->
+	<bean class="com.hc24.frame.spring.SpringFactory"/>
+	
+	
+	
+</beans>
